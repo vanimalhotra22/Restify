@@ -1,0 +1,9 @@
+{
+  "short_name": "Sleeplens",
+  "name": "Sleeplens Sleep Diagnostics",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0a0b1e",
+  "background_color": "#0a0b1e"
+}
