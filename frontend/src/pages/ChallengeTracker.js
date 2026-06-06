@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FiAward, FiCheck, FiCheckSquare, FiBookOpen, FiArrowRight } from "react-icons/fi";
+import { FiAward, FiCheckSquare, FiCoffee, FiClock, FiAlertTriangle, FiTrash2, FiPlus } from "react-icons/fi";
 
 const ChallengeTracker = ({ backendUrl, user }) => {
   const [challenge, setChallenge] = useState({ streak: 0, max_streak: 0, badges: [] });
@@ -12,10 +12,23 @@ const ChallengeTracker = ({ backendUrl, user }) => {
     room_cool: false
   });
   
-  // CBT-I Reframing Journal states
-  const [worryLog, setWorryLog] = useState([]);
-  const [automaticWorry, setAutomaticWorry] = useState("");
-  const [rationalReframed, setRationalReframed] = useState("");
+  // Target bedtime from Settings, default to 22:30
+  const [targetBedtime, setTargetBedtime] = useState("22:30");
+
+  // Caffeine Curfew states
+  const [caffeineLogs, setCaffeineLogs] = useState([]);
+  const [drinkType, setDrinkType] = useState("brewed_coffee");
+  const [consumeTime, setConsumeTime] = useState("14:00");
+
+  const drinkDatabase = {
+    brewed_coffee: { name: "☕ Brewed Drip Coffee (12oz)", caffeine: 140 },
+    espresso: { name: "☕ Single Espresso Shot", caffeine: 75 },
+    double_espresso: { name: "☕ Double Espresso Shot", caffeine: 150 },
+    energy_drink: { name: "⚡ Energy Drink (12oz)", caffeine: 160 },
+    black_tea: { name: "🍵 Black Tea (8oz)", caffeine: 50 },
+    green_tea: { name: "🍵 Green Tea (8oz)", caffeine: 30 },
+    cola: { name: "🥤 Soda / Cola (12oz)", caffeine: 35 }
+  };
 
   const fetchChallengeData = async () => {
     try {
@@ -31,15 +44,28 @@ const ChallengeTracker = ({ backendUrl, user }) => {
   useEffect(() => {
     fetchChallengeData();
     
-    // Load local storage states for daily checklist & CBT journal
+    // Load local storage states for daily checklist & caffeine logs
     const storedChecklist = localStorage.getItem(`checklist_${user.id}_${new Date().toDateString()}`);
     if (storedChecklist) {
       setChecklist(JSON.parse(storedChecklist));
     }
 
-    const storedLogs = localStorage.getItem(`cbt_logs_${user.id}`);
+    const storedLogs = localStorage.getItem(`caffeine_logs_${user.id}`);
     if (storedLogs) {
-      setWorryLog(JSON.parse(storedLogs));
+      setCaffeineLogs(JSON.parse(storedLogs));
+    }
+
+    // Retrieve target bedtime
+    const storedGoals = localStorage.getItem(`goals_${user.id}`);
+    if (storedGoals) {
+      try {
+        const parsed = JSON.parse(storedGoals);
+        if (parsed.target_bedtime) {
+          setTargetBedtime(parsed.target_bedtime);
+        }
+      } catch (err) {
+        console.error("Failed to parse goals", err);
+      }
     }
   }, [backendUrl, user.id]);
 
@@ -49,29 +75,62 @@ const ChallengeTracker = ({ backendUrl, user }) => {
     localStorage.setItem(`checklist_${user.id}_${new Date().toDateString()}`, JSON.stringify(updated));
   };
 
-  const handleCbtSubmit = (e) => {
-    e.preventDefault();
-    if (!automaticWorry.trim() || !rationalReframed.trim()) return;
+  // Helper to calculate decimal hours elapsed between two times
+  const getElapsedHours = (timeStart, timeEnd) => {
+    const [h1, m1] = timeStart.split(":").map(Number);
+    const [h2, m2] = timeEnd.split(":").map(Number);
+    
+    let diffMin = (h2 * 60 + m2) - (h1 * 60 + m1);
+    if (diffMin < 0) {
+      // If target bedtime is after midnight (e.g. 00:30) and coffee was at 14:00
+      diffMin += 24 * 60;
+    }
+    return diffMin / 60;
+  };
 
+  // Calculate remaining caffeine at bedtime based on 5-hour half-life
+  const calculateRemainingCaffeine = (log) => {
+    const hoursElapsed = getElapsedHours(log.time, targetBedtime);
+    // Formula: Initial * 0.5 ^ (hours / half_life)
+    const remaining = log.initialCaffeine * Math.pow(0.5, hoursElapsed / 5.0);
+    return Math.round(remaining * 10) / 10;
+  };
+
+  // Sum of all active caffeine at bedtime
+  const totalCaffeineAtBedtime = caffeineLogs.reduce((sum, log) => {
+    return sum + calculateRemainingCaffeine(log);
+  }, 0);
+
+  const getCaffeineStatus = (mg) => {
+    if (mg < 20) {
+      return { text: "Safe Zone", color: "var(--accent-teal)", desc: "Minimal impact on sleep structure and latency." };
+    }
+    if (mg <= 55) {
+      return { text: "Alert Zone", color: "var(--accent-amber)", desc: "May delay sleep onset & reduce deep sleep phases." };
+    }
+    return { text: "Disruption Risk", color: "var(--accent-rose)", desc: "High likelihood of insomnia, micro-awakenings, and light sleep." };
+  };
+
+  const handleAddCaffeine = (e) => {
+    e.preventDefault();
+    const drink = drinkDatabase[drinkType];
     const newLog = {
       id: Date.now(),
-      worry: automaticWorry,
-      reframed: rationalReframed,
+      name: drink.name,
+      initialCaffeine: drink.caffeine,
+      time: consumeTime,
       date: new Date().toLocaleDateString()
     };
 
-    const updatedLogs = [newLog, ...worryLog];
-    setWorryLog(updatedLogs);
-    localStorage.setItem(`cbt_logs_${user.id}`, JSON.stringify(updatedLogs));
-    
-    setAutomaticWorry("");
-    setRationalReframed("");
+    const updated = [...caffeineLogs, newLog];
+    setCaffeineLogs(updated);
+    localStorage.setItem(`caffeine_logs_${user.id}`, JSON.stringify(updated));
   };
 
-  const deleteCbtLog = (id) => {
-    const updatedLogs = worryLog.filter((log) => log.id !== id);
-    setWorryLog(updatedLogs);
-    localStorage.setItem(`cbt_logs_${user.id}`, JSON.stringify(updatedLogs));
+  const handleDeleteLog = (id) => {
+    const updated = caffeineLogs.filter((log) => log.id !== id);
+    setCaffeineLogs(updated);
+    localStorage.setItem(`caffeine_logs_${user.id}`, JSON.stringify(updated));
   };
 
   const badgeDescriptions = {
@@ -80,10 +139,12 @@ const ChallengeTracker = ({ backendUrl, user }) => {
     "SleepMaster": { name: "Sleep Master", desc: "Achieved a solid 15-day streak of healthy sleep habits!" }
   };
 
+  const caffeineStatus = getCaffeineStatus(totalCaffeineAtBedtime);
+
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
       
-      {/* 30-Day Sleep Challenge & Streaks */}
+      {/* Left Column: Streaks & Daily Checklist */}
       <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
         
         {/* Challenge Streaks */}
@@ -195,84 +256,124 @@ const ChallengeTracker = ({ backendUrl, user }) => {
 
       </div>
 
-      {/* CBT-I Thought Reframing Log */}
+      {/* Right Column: Caffeine Clearance & Curfew Tracker */}
       <div className="glass-panel" style={{ display: "flex", flexDirection: "column" }}>
         <div className="glass-card-header">
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <FiBookOpen style={{ color: "var(--accent-purple)" }} />
-            <h3>CBT-I Thought Reframer</h3>
+            <FiCoffee style={{ color: "var(--accent-amber)", fontSize: "20px" }} />
+            <h3>Caffeine Clearance Tracker</h3>
           </div>
         </div>
 
         <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "16px" }}>
-          Cognitive Behavioral Therapy for Insomnia (CBT-I) uses thought logs to challenge catastrophic sleep anxieties (e.g., "If I don't sleep now, I will fail tomorrow").
+          Caffeine blocks adenosine receptors for up to 10 hours. Log drinks to calculate estimated caffeine concentration remaining in your system at bedtime (Target: <b>{targetBedtime}</b>).
         </p>
 
-        {/* Thought Input Form */}
-        <form onSubmit={handleCbtSubmit} style={{ marginBottom: "20px" }}>
-          <div className="form-group">
-            <label className="form-label">Automatic Worry Sleep Thought</label>
-            <input 
-              type="text" 
+        {/* Dynamic Caffeine Bedtime Gauge */}
+        <div style={{ background: "#f8fafc", border: "1px solid var(--border-color)", padding: "16px", borderRadius: "12px", marginBottom: "20px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+            <span style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)" }}>ESTIMATED BEDTIME CAFFEINE</span>
+            <span style={{ fontSize: "18px", fontWeight: "800", color: caffeineStatus.color }}>{Math.round(totalCaffeineAtBedtime)} mg</span>
+          </div>
+
+          <div style={{ height: "10px", background: "#cbd5e1", borderRadius: "5px", overflow: "hidden", marginBottom: "8px" }}>
+            <div 
+              style={{ 
+                width: `${Math.min(totalCaffeineAtBedtime / 150 * 100, 100)}%`, 
+                height: "100%", 
+                background: caffeineStatus.color,
+                transition: "width 0.35s ease"
+              }}
+            />
+          </div>
+
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "12px" }}>
+            <FiAlertTriangle style={{ color: caffeineStatus.color, marginTop: "2px", flexShrink: 0 }} />
+            <div>
+              <b style={{ color: caffeineStatus.color }}>{caffeineStatus.text}</b> — {caffeineStatus.desc}
+            </div>
+          </div>
+        </div>
+
+        {/* Caffeine Log Form */}
+        <form onSubmit={handleAddCaffeine} style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr auto", gap: "10px", marginBottom: "20px" }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <label className="form-label">Drink Name</label>
+            <select 
               className="form-input" 
-              value={automaticWorry} 
-              onChange={(e) => setAutomaticWorry(e.target.value)} 
-              placeholder="e.g., If I stay awake tonight, my presentation will be ruined"
+              value={drinkType} 
+              onChange={(e) => setDrinkType(e.target.value)}
+              style={{ padding: "8px 10px" }}
+            >
+              {Object.keys(drinkDatabase).map((key) => (
+                <option key={key} value={key}>{drinkDatabase[key].name} ({drinkDatabase[key].caffeine}mg)</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <label className="form-label">Time Consumed</label>
+            <input 
+              type="time" 
+              className="form-input" 
+              value={consumeTime} 
+              onChange={(e) => setConsumeTime(e.target.value)}
+              style={{ padding: "7px 10px" }}
               required 
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Rational/Cognitive Reframing</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              value={rationalReframed} 
-              onChange={(e) => setRationalReframed(e.target.value)} 
-              placeholder="e.g., I have worked tired before. I can handle it. Sleep will come."
-              required 
-            />
+          <div style={{ display: "flex", alignItems: "flex-end" }}>
+            <button type="submit" className="btn btn-primary" style={{ padding: "10px", borderRadius: "8px", height: "38px" }}>
+              <FiPlus />
+            </button>
           </div>
-
-          <button type="submit" className="btn btn-primary" style={{ width: "100%" }}>
-            Record Reframed Thought
-          </button>
         </form>
 
-        {/* Journals Log */}
+        {/* Log list */}
         <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "10px" }}>
-          {worryLog.map((log) => (
-            <div 
-              key={log.id} 
-              style={{
-                padding: "12px 14px",
-                background: "var(--bg-main)",
-                borderLeft: "4px solid var(--accent-purple)",
-                borderRadius: "0 8px 8px 0",
-                fontSize: "12.5px"
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-muted)", fontSize: "11px", marginBottom: "4px" }}>
-                <span>{log.date}</span>
-                <button 
-                  onClick={() => deleteCbtLog(log.id)}
-                  style={{ background: "transparent", border: "none", color: "var(--accent-rose)", cursor: "pointer", fontWeight: "600" }}
-                >
-                  Delete
-                </button>
+          {caffeineLogs.map((log) => {
+            const rem = calculateRemainingCaffeine(log);
+            return (
+              <div 
+                key={log.id} 
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "12px 14px",
+                  background: "#f1f5f9",
+                  borderLeft: "4px solid var(--accent-amber)",
+                  borderRadius: "0 8px 8px 0",
+                  fontSize: "12.5px"
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: "700", color: "var(--text-primary)" }}>{log.name}</div>
+                  <div style={{ color: "var(--text-secondary)", fontSize: "11px", display: "flex", alignItems: "center", gap: "4px", marginTop: "2px" }}>
+                    <FiClock /> Drank at {log.time} | Initial: {log.initialCaffeine}mg
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontWeight: "700", color: rem > 30 ? "var(--accent-rose)" : "var(--accent-teal)" }}>{rem} mg</div>
+                    <div style={{ fontSize: "9.5px", color: "var(--text-muted)" }}>at bedtime</div>
+                  </div>
+                  <button 
+                    onClick={() => handleDeleteLog(log.id)}
+                    style={{ background: "transparent", border: "none", color: "var(--accent-rose)", cursor: "pointer", fontSize: "15px" }}
+                    title="Remove drink"
+                  >
+                    <FiTrash2 />
+                  </button>
+                </div>
               </div>
-              <div style={{ color: "var(--accent-rose)", textDecoration: "line-through" }}>
-                ❌ "{log.worry}"
-              </div>
-              <div style={{ color: "var(--accent-teal)", fontWeight: "600", marginTop: "4px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <FiArrowRight /> "{log.reframed}"
-              </div>
-            </div>
-          ))}
+            );
+          })}
 
-          {worryLog.length === 0 && (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "120px", color: "var(--text-muted)" }}>
-              No CBT-I journals logged yet.
+          {caffeineLogs.length === 0 && (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "120px", color: "var(--text-muted)", fontSize: "12.5px" }}>
+              No caffeine logged for today.
             </div>
           )}
         </div>
