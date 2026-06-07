@@ -18,7 +18,7 @@ function App() {
 
   useEffect(() => {
     // Check if user session exists in local storage
-    const storedUser = localStorage.getItem("sleeplens_user");
+    const storedUser = localStorage.getItem("restify_user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -26,12 +26,12 @@ function App() {
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
-    localStorage.setItem("sleeplens_user", JSON.stringify(userData));
+    localStorage.setItem("restify_user", JSON.stringify(userData));
   };
 
   const handleLogout = () => {
     setUser(null);
-    localStorage.removeItem("sleeplens_user");
+    localStorage.removeItem("restify_user");
     setActiveTab("dashboard");
   };
 

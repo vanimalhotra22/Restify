@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # CONFIGURATION
-app = FastAPI(title="Sleeplens Prevention API", version="3.0")
+app = FastAPI(title="Restify Prevention API", version="3.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -195,7 +195,7 @@ def chatbot(req: ChatRequest):
     if gemini_model is not None:
         try:
             prompt = (
-                "You are Sleeplens Coach, a friendly, professional AI sleep coach. "
+                "You are Restify Coach, a friendly, professional AI sleep coach. "
                 "Provide advice focused strictly on sleep hygiene, circadian rhythm, "
                 "or preventing sleep disorders. Keep it under 3 sentences: "
             )
@@ -346,7 +346,7 @@ def admin_analytics():
             "avg_sleep_duration": round(float(avg_dur), 2),
             "avg_sleep_quality": round(float(avg_qual), 2),
             "system_status": "Operational",
-            "db_size": os.path.exists("sleeplens.db")
+            "db_size": os.path.exists("restify.db")
         }
     finally:
         session.close()

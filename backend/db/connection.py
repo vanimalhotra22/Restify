@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 
 # Use SQLite by default (local file)
-DB_FILE = os.environ.get("SLEEPLENS_DB", "sleeplens.db")
+DB_FILE = os.environ.get("RESTIFY_DB", "restify.db")
 DATABASE_URL = f"sqlite:///{DB_FILE}"
 
 # For other DBs, set DATABASE_URL via env or change above

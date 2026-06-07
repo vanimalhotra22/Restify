@@ -27,7 +27,7 @@ const Sidebar = ({ activeTab, setActiveTab, user, onLogout }) => {
     <aside className="sidebar">
       <div className="logo-container">
         <FiClock className="logo-icon" />
-        <span className="logo-text">Sleeplens</span>
+        <span className="logo-text">Restify</span>
       </div>
 
       <nav style={{ flex: 1 }}>

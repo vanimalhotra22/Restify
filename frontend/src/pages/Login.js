@@ -83,7 +83,7 @@ const Login = ({ backendUrl, onLoginSuccess }) => {
           >
             <FiClock />
           </div>
-          <h2 style={{ fontSize: "24px", fontWeight: "800", color: "var(--primary)" }}>Sleeplens</h2>
+          <h2 style={{ fontSize: "24px", fontWeight: "800", color: "var(--primary)" }}>Restify</h2>
           <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginTop: "4px" }}>
             Sleep Disorder Prevention System
           </p>
@@ -192,7 +192,7 @@ const Login = ({ backendUrl, onLoginSuccess }) => {
               cursor: "pointer" 
             }}
           >
-            {isRegister ? "Already have an account? Sign In" : "New to Sleeplens? Create Account"}
+            {isRegister ? "Already have an account? Sign In" : "New to Restify? Create Account"}
           </button>
         </div>
       </div>

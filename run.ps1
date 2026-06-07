@@ -3,7 +3,7 @@
 
 Clear-Host
 Write-Host "==========================================================" -ForegroundColor Magenta
-Write-Host "🚀          Sleeplens Diagnostics & AI Coaching           " -ForegroundColor Cyan
+Write-Host "🚀          Restify Sleep Prevention Hub           " -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Magenta
 Write-Host ""
 
@@ -36,10 +36,10 @@ Write-Host ""
 Write-Host "🚀 Launching backend and frontend concurrently..." -ForegroundColor Cyan
 
 # 4. Launch Backend in new window
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$env:PYTHONIOENCODING='utf-8'; python -m uvicorn backend.main:app --reload --port 8000" -Title "Sleeplens Backend API"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$env:PYTHONIOENCODING='utf-8'; python -m uvicorn backend.main:app --reload --port 8000" -Title "Restify Backend API"
 
 # 5. Launch Frontend in new window
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd frontend; npm start" -Title "Sleeplens React App"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd frontend; npm start" -Title "Restify React App"
 
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host "🎉 Launch Complete!" -ForegroundColor Green
