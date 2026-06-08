@@ -1,6 +1,6 @@
 # 🌌 Restify: Sleep Disorder Prevention & Diagnostics Hub
 
-Restify is an advanced, light sky-blue themed **Digital Health Platform** designed to help users track sleep hygiene, identify risk biomarkers for clinical sleep disorders early, and connect with telehealth specialist interventions.
+Restify is an advanced **Digital Health Platform** designed to help users track sleep hygiene, identify risk biomarkers for clinical sleep disorders early, and connect with telehealth specialist interventions.
 
 The application combines heuristic risk models, computer vision, acoustic soundscape analysis, interactive sound synthesis, and generative AI sleep coaching to deliver a premium wellness experience.
 
