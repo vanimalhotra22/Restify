@@ -8,7 +8,11 @@ import {
   FiAward, 
   FiSmile, 
   FiSettings, 
-  FiLogOut 
+  FiLogOut,
+  FiCoffee,
+  FiHeart,
+  FiCamera,
+  FiUserCheck
 } from "react-icons/fi";
 
 const Sidebar = ({ activeTab, setActiveTab, user, onLogout }) => {
@@ -20,6 +24,10 @@ const Sidebar = ({ activeTab, setActiveTab, user, onLogout }) => {
     { id: "challenge", label: "Sleep Challenge", icon: <FiAward /> },
     { id: "calculator", label: "Bedtime Clock", icon: <FiClock /> },
     { id: "simulator", label: "Risk Simulator", icon: <FiSliders /> },
+    { id: "diet", label: "Diet Planner", icon: <FiCoffee /> },
+    { id: "ecg", label: "Cardiac ECG", icon: <FiHeart /> },
+    { id: "lab", label: "AI Diagnostics Lab", icon: <FiCamera /> },
+    { id: "consultation", label: "Doctor Booking", icon: <FiUserCheck /> },
     { id: "settings", label: "Settings", icon: <FiSettings /> },
   ];
 

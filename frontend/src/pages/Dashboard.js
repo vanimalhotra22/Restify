@@ -134,8 +134,52 @@ const Dashboard = ({ backendUrl, user }) => {
         { name: "Sun", hours: 7.0, quality: 3, mood: 3 }
       ];
 
+  const downloadReport = async () => {
+    try {
+      const response = await axios.get(`${backendUrl}/sleep/report/pdf?user_id=${user.id}`, {
+        responseType: "blob"
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Weekly_Sleep_Report_${user.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      alert("Failed to download PDF sleep report.");
+    }
+  };
+
   return (
     <div>
+      {/* PDF Report Banner */}
+      <div 
+        className="glass-panel" 
+        style={{ 
+          padding: "16px 20px", 
+          borderRadius: "16px", 
+          marginBottom: "24px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          background: "linear-gradient(135deg, rgba(2, 132, 199, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)",
+          border: "1px solid var(--border-color)"
+        }}
+      >
+        <div>
+          <h4 style={{ fontSize: "14px", fontWeight: "700" }}>Weekly Clinical Sleep Diagnostics Report</h4>
+          <p style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "2px" }}>Generate and download a comprehensive PDF analysis of your sleep logs, scores, and risk biomarkers for review with doctors.</p>
+        </div>
+        <button 
+          onClick={downloadReport} 
+          className="btn btn-primary"
+          style={{ padding: "8px 16px", fontSize: "13px", height: "fit-content" }}
+        >
+          📄 Download PDF Report
+        </button>
+      </div>
+
       {/* Live Reminder Header Notification */}
       {liveReminder && (
         <div 

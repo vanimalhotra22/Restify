@@ -10,6 +10,10 @@ import ChallengeTracker from "./pages/ChallengeTracker";
 import BedtimeCalculator from "./pages/BedtimeCalculator";
 import RiskSimulator from "./pages/RiskSimulator";
 import Settings from "./pages/Settings";
+import DietPlanner from "./pages/DietPlanner";
+import ECGAnalyzer from "./pages/ECGAnalyzer";
+import DarkCircleSnoringLab from "./pages/DarkCircleSnoringLab";
+import DoctorConsultation from "./pages/DoctorConsultation";
 
 function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -53,6 +57,14 @@ function App() {
         return <RiskSimulator backendUrl={backendUrl} user={user} />;
       case "settings":
         return <Settings backendUrl={backendUrl} user={user} />;
+      case "diet":
+        return <DietPlanner backendUrl={backendUrl} />;
+      case "ecg":
+        return <ECGAnalyzer backendUrl={backendUrl} />;
+      case "lab":
+        return <DarkCircleSnoringLab backendUrl={backendUrl} />;
+      case "consultation":
+        return <DoctorConsultation backendUrl={backendUrl} user={user} />;
       default:
         return <Dashboard backendUrl={backendUrl} user={user} />;
     }
